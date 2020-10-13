@@ -24,13 +24,30 @@ export interface InternalArtifactsStackProps extends StackProps {
  * Stack for Source Code and Docker Image(s) repositories.
  */
 export class InternalArtifactsStack extends Stack {
+
+    readonly codeRepository: codecommit.Repository;
+
+    readonly ecrRepository: ecr.Repository;
+
     constructor(app: App, id: string, props: InternalArtifactsStackProps) {
         super(app, id, props );
-        this.createEcrImageRepository(props);
-        this.createCodeCommitSourceCodeRepository(props);
+        this.codeRepository = this.createCodeCommitSourceCodeRepository(props);
+        this.ecrRepository = this.createEcrImageRepository(props);
     }
 
-    private createEcrImageRepository(props: InternalArtifactsStackProps) {
+    private createCodeCommitSourceCodeRepository(props: InternalArtifactsStackProps): codecommit.Repository {
+        const codeRepository = new codecommit.Repository(this, 'CodeRepository' ,{
+            repositoryName: props.projectName,
+            description: 'Source code for project ' + props.projectName, // optional property
+        });
+
+        new cdk.CfnOutput(this, 'sourceCodeRepositoryArn', { value: codeRepository.repositoryArn })
+        new cdk.CfnOutput(this, 'sourceCodeRepositoryCloneUrl', { value: codeRepository.repositoryCloneUrlHttp })
+
+        return codeRepository;
+    }
+
+    private createEcrImageRepository(props: InternalArtifactsStackProps): ecr.Repository {
         const repository = new ecr.Repository(this, 'ImageRepo', {
             repositoryName: props.projectName,
             imageScanOnPush: true,
@@ -47,15 +64,8 @@ export class InternalArtifactsStack extends Stack {
         repository.addLifecycleRule({maxImageAge: cdk.Duration.days(5)});
 
         new cdk.CfnOutput(this, 'imageRepositoryArn', { value: repository.repositoryArn })
-    }
+        new cdk.CfnOutput(this, 'imageRepositoryUri', { value: repository.repositoryUri })
 
-    private createCodeCommitSourceCodeRepository(props: InternalArtifactsStackProps) {
-        const repository = new codecommit.Repository(this, 'CodeRepository' ,{
-            repositoryName: props.projectName,
-            description: 'Source code for project ' + props.projectName, // optional property
-        });
-
-        new cdk.CfnOutput(this, 'sourceCodeRepositoryArn', { value: repository.repositoryArn })
-        new cdk.CfnOutput(this, 'sourceCodeRepositoryCloneUrl', { value: repository.repositoryCloneUrlHttp })
+        return repository;
     }
 }
