@@ -4,8 +4,7 @@ import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import * as iam from '@aws-cdk/aws-iam';
 
-import {NestedStack, NestedStackProps, Stack} from '@aws-cdk/core';
-
+import {App, NestedStack, NestedStackProps, Stack, StackProps} from '@aws-cdk/core';
 
 export interface SkaffoldImageBuildProps {
   /**

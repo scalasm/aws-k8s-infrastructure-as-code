@@ -2,28 +2,24 @@
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
 import {ClusterStack} from '../lib/cluster-stack';
-import {MicroserviceCiCdStack} from "../lib/microservice-ci-cd-stack";
-import {InternalArtifactsStack} from "../lib/internal-artifacts-stack";
+import {MicroserviceCiCdStack} from "./microservice-ci-cd-stack";
 
-const microserviceProjectName = 'hello-world';
+const applicationName = 'hello-world-app';
 
 const app = new cdk.App();
 
-const clusterStack = new ClusterStack(app, 'InfrastructureAsCodeStack', {
+//
+// Target environment
+//
+const devClusterStack = new ClusterStack(app, 'DevClusterStack', {
     clusterName: 'dev-cluster',
+    namespaceName: applicationName,
 });
 
-const internalArtifactsStack = new InternalArtifactsStack( app, 'InternalArtifactsStack', {
-    projectName: microserviceProjectName,
-});
-
-new MicroserviceCiCdStack(app, 'DevHelloWorldCiCdStack', {
-    projectName: microserviceProjectName,
-    targetCluster: clusterStack.cluster,
-
-    sourceCodeRepository: internalArtifactsStack.codeRepository,
-    branchName: 'master',
-
-    targetImageRepository: internalArtifactsStack.ecrRepository,
-    imageTag: 'dev'
+//
+// CI/CD environment
+//
+new MicroserviceCiCdStack( app, 'HelloWorldCiCdStack', {
+    microserviceProjectName: 'hello-world',
+    targetCluster: devClusterStack.cluster
 } );

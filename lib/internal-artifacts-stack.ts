@@ -1,12 +1,12 @@
 import * as codecommit from '@aws-cdk/aws-codecommit';
 import * as ecr from '@aws-cdk/aws-ecr';
 import * as cdk from '@aws-cdk/core';
-import {App, RemovalPolicy, Stack, StackProps} from '@aws-cdk/core';
+import {App, NestedStack, NestedStackProps, RemovalPolicy, Stack, StackProps} from '@aws-cdk/core';
 
 // [...] we define a new props interface for it, PipelineStackProps. This extends the 
 // standard StackProps and is how clients of this class (including ourselves) pass 
 // the Lambda code that the class needs.
-export interface InternalArtifactsStackProps extends StackProps {
+export interface InternalArtifactsStackProps extends NestedStackProps {
     /**
      * The name of the project.
      */
@@ -23,13 +23,13 @@ export interface InternalArtifactsStackProps extends StackProps {
 /**
  * Stack for Source Code and Docker Image(s) repositories.
  */
-export class InternalArtifactsStack extends Stack {
+export class InternalArtifactsStack extends NestedStack {
 
     readonly codeRepository: codecommit.Repository;
 
     readonly ecrRepository: ecr.Repository;
 
-    constructor(app: App, id: string, props: InternalArtifactsStackProps) {
+    constructor(app: Stack, id: string, props: InternalArtifactsStackProps) {
         super(app, id, props );
         this.codeRepository = this.createCodeCommitSourceCodeRepository(props);
         this.ecrRepository = this.createEcrImageRepository(props);
