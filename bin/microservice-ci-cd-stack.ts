@@ -3,34 +3,28 @@ import * as codecommit from '@aws-cdk/aws-codecommit';
 import * as ecr from '@aws-cdk/aws-ecr';
 import {App, Stack, StackProps} from '@aws-cdk/core';
 import {SkaffoldPipelineStack} from '../lib/skaffold-pipeline-stack';
-import {InternalArtifactsStack} from "../lib/internal-artifacts-stack";
 
 /**
  * Configuration properties for the CI/CD stack
  */
 export interface MicroserviceCiCdStackProps extends StackProps {
-    readonly microserviceProjectName: string,
+    readonly projectName: string,
 
     readonly targetCluster: eks.Cluster,
-}
-
-/**
- * Implements the default stack for developing a microservice, including source code repository, Docker image
- * repository, and one CI/CD for building the image from the master branch and deploy it into the target cluster.
- */
-export class MicroserviceCiCdStack extends Stack {
 
     readonly codeRepository: codecommit.Repository;
     readonly ecrRepository: ecr.Repository;
+}
+
+/**
+ * Implements the default stack for CI/CD workflow.
+ *
+ * By Default it uses SkaffoldPipelineStack as default implementation, which is fine for my use case.
+ */
+export class MicroserviceCiCdStack extends Stack {
 
     constructor(app: App, id: string, props: MicroserviceCiCdStackProps) {
         super(app, id, props );
-
-        const internalArtifactsStack = new InternalArtifactsStack(this, 'InternalArtifactsStack', {
-            projectName: props.microserviceProjectName,
-        });
-        this.codeRepository = internalArtifactsStack.codeRepository;
-        this.ecrRepository = internalArtifactsStack.ecrRepository;
 
         this.defineCiCdPipelines(props);
     }
@@ -45,15 +39,15 @@ export class MicroserviceCiCdStack extends Stack {
             clusterName: props.targetCluster.clusterName,
             eksAdminRoleArn: props.targetCluster.adminRole.roleArn,
 
-            repoName: this.codeRepository.repositoryName,
+            repoName: props.codeRepository.repositoryName,
             branchName: 'master',
             fetchGitMetadata: true,
 
             skaffoldProfiles: 'build-image',
 
             imageBuildProps: {
-                repositoryPrefix: this.ecrRepository.repositoryUri,
-                name: this.ecrRepository.repositoryName,
+                repositoryPrefix: props.ecrRepository.repositoryUri,
+                name: props.ecrRepository.repositoryName,
                 tag: 'dev'
             },
         });

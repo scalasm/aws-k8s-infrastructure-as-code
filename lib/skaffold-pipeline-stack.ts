@@ -29,9 +29,9 @@ export interface SkaffoldImageBuildProps {
 //  readonly imageUri: string,
 }
 
-// [...] we define a new props interface for it, PipelineStackProps. This extends the 
-// standard StackProps and is how clients of this class (including ourselves) pass 
-// the Lambda code that the class needs.
+/**
+ * CI/CD pipeline based on the use of Skaffold for building and deploying a microservice app.
+ */
 export interface SkaffoldPipelineStackProps extends NestedStackProps {
   /**
    * Git repository name (e.g., 'hello-world').

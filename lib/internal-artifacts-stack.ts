@@ -1,35 +1,37 @@
 import * as codecommit from '@aws-cdk/aws-codecommit';
 import * as ecr from '@aws-cdk/aws-ecr';
 import * as cdk from '@aws-cdk/core';
-import {App, NestedStack, NestedStackProps, RemovalPolicy, Stack, StackProps} from '@aws-cdk/core';
+import {App, RemovalPolicy, Stack, StackProps} from '@aws-cdk/core';
 
-// [...] we define a new props interface for it, PipelineStackProps. This extends the 
-// standard StackProps and is how clients of this class (including ourselves) pass 
-// the Lambda code that the class needs.
-export interface InternalArtifactsStackProps extends NestedStackProps {
+/**
+ * Configuration options for InternalArtifactsStack.
+ */
+export interface InternalArtifactsStackProps extends StackProps {
     /**
-     * The name of the project.
+     * The name of the project (typically a microservice, like 'order-service').
      */
     readonly projectName: string,
 
     /**
      * Docker image tags that are not to be removed when cleaning up operations are periodically performed. If not set,
-     * the following will be used:
-     *  * 'dev', 'prod'
+     * automatic clean up for dangling images will not be performed.
      */
-    readonly imageTags?: string[];
+    readonly preservedImageTags?: string[];
 }
 
 /**
- * Stack for Source Code and Docker Image(s) repositories.
+ * Stack for Source Code and Docker Image(s) repositories. If so configured, Docker images can be cleaned up
+ * automatically.
+ *
+ * This class can be subclassed in roder to perform additional configuration work on AWS resources.
  */
-export class InternalArtifactsStack extends NestedStack {
+export class InternalArtifactsStack extends Stack {
 
     readonly codeRepository: codecommit.Repository;
 
     readonly ecrRepository: ecr.Repository;
 
-    constructor(app: Stack, id: string, props: InternalArtifactsStackProps) {
+    constructor(app: App, id: string, props: InternalArtifactsStackProps) {
         super(app, id, props );
         this.codeRepository = this.createCodeCommitSourceCodeRepository(props);
         this.ecrRepository = this.createEcrImageRepository(props);
@@ -54,14 +56,12 @@ export class InternalArtifactsStack extends NestedStack {
             removalPolicy: RemovalPolicy.DESTROY
         });
 
-        let imageTags = props.imageTags;
-        if (!imageTags) {
-            imageTags = ['dev', 'prod']
-        }
-
         // Keep images tagged
-        repository.addLifecycleRule({tagPrefixList: imageTags, maxImageCount: 999});
-        repository.addLifecycleRule({maxImageAge: cdk.Duration.days(5)});
+        const imageTags = props.preservedImageTags;
+        if (imageTags) {
+            repository.addLifecycleRule({tagPrefixList: imageTags, maxImageCount: 999});
+            repository.addLifecycleRule({maxImageAge: cdk.Duration.days(5)});
+        }
 
         new cdk.CfnOutput(this, 'imageRepositoryArn', { value: repository.repositoryArn })
         new cdk.CfnOutput(this, 'imageRepositoryUri', { value: repository.repositoryUri })
