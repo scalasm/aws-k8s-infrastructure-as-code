@@ -8,9 +8,15 @@ import {App, RemovalPolicy, Stack, StackProps} from '@aws-cdk/core';
  */
 export interface InternalArtifactsStackProps extends StackProps {
     /**
+     * The optional application name: if provided it will be used when creating the Docker image registry using this as
+     * namespace definition (e.g., <applicationname>/<microserviceName>:<tag>)
+     */
+    readonly applicationName?: string
+
+    /**
      * The name of the project (typically a microservice, like 'order-service').
      */
-    readonly projectName: string,
+    readonly microserviceName: string,
 
     /**
      * Docker image tags that are not to be removed when cleaning up operations are periodically performed. If not set,
@@ -39,8 +45,8 @@ export class InternalArtifactsStack extends Stack {
 
     private createCodeCommitSourceCodeRepository(props: InternalArtifactsStackProps): codecommit.Repository {
         const codeRepository = new codecommit.Repository(this, 'CodeRepository' ,{
-            repositoryName: props.projectName,
-            description: 'Source code for project ' + props.projectName, // optional property
+            repositoryName: props.microserviceName,
+            description: 'Source code for project ' + props.microserviceName, // optional property
         });
 
         new cdk.CfnOutput(this, 'sourceCodeRepositoryArn', { value: codeRepository.repositoryArn })
@@ -50,9 +56,13 @@ export class InternalArtifactsStack extends Stack {
     }
 
     private createEcrImageRepository(props: InternalArtifactsStackProps): ecr.Repository {
+        // From the Web Console: "A namespace can be included with your repository name (e.g. namespace/repo-name).
+        const registryNamespace = props.applicationName? props.applicationName : props.microserviceName;
+        const repositoryName = `${registryNamespace}/${props.microserviceName}`
+
         const repository = new ecr.Repository(this, 'ImageRepo', {
-            repositoryName: props.projectName,
-            imageScanOnPush: true,
+            repositoryName: repositoryName,
+            imageScanOnPush: false,
             removalPolicy: RemovalPolicy.DESTROY
         });
 
@@ -63,8 +73,8 @@ export class InternalArtifactsStack extends Stack {
             repository.addLifecycleRule({maxImageAge: cdk.Duration.days(5)});
         }
 
-        new cdk.CfnOutput(this, 'imageRepositoryArn', { value: repository.repositoryArn })
-        new cdk.CfnOutput(this, 'imageRepositoryUri', { value: repository.repositoryUri })
+        new cdk.CfnOutput(this, 'imageRepositoryArn', { value: repository.repositoryArn });
+        new cdk.CfnOutput(this, 'imageRepositoryUri', { value: repository.repositoryUri });
 
         return repository;
     }

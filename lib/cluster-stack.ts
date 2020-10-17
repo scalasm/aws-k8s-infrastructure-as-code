@@ -46,7 +46,7 @@ export class ClusterStack extends cdk.Stack {
       });
     }
 
-    new cdk.CfnOutput(this, 'ClusterArn', { value: this.cluster.clusterArn })
-    new cdk.CfnOutput(this, 'ClusterAdminRoleArn', { value: this.cluster.adminRole.roleArn })
+    new cdk.CfnOutput(this, 'ClusterArn', { value: this.cluster.clusterArn });
+    new cdk.CfnOutput(this, 'ClusterAdminRoleArn', { value: this.cluster.adminRole.roleArn });
   }
 }

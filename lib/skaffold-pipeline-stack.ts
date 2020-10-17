@@ -4,7 +4,7 @@ import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
 import * as iam from '@aws-cdk/aws-iam';
 
-import {App, NestedStack, NestedStackProps, Stack, StackProps} from '@aws-cdk/core';
+import {NestedStack, NestedStackProps, Stack} from '@aws-cdk/core';
 
 export interface SkaffoldImageBuildProps {
   /**
@@ -13,20 +13,10 @@ export interface SkaffoldImageBuildProps {
    */
   readonly repositoryPrefix: string,
   /**
-   * The image name.
-   * Example: "hello-world"
-   */
-  readonly name: string,
-  /**
    * The tag for the image to be deployed.
    * Example: "dev"
    */
   readonly tag: string
-
-  /**
-   * Example: "015589054602.dkr.ecr.eu-central-1.amazonaws.com/hello-world/hello-world:dev"
-   */
-//  readonly imageUri: string,
 }
 
 /**
@@ -202,14 +192,22 @@ export class SkaffoldPipelineStack extends NestedStack {
   }
 
   protected prepareBuildCommands(props: SkaffoldPipelineStackProps): string[] {
-    let commands: string[] = [];
+    let commands: string[];
     
     // If we have to build or deploy a container as part of this Kubernetes deployment, then let's inform Skaffold about 
     // the container's image we want to deploy
     const imageProps = props.imageBuildProps;
     if (imageProps) {
-      commands = [ 
-        `skaffold run -p ${props.skaffoldProfiles} --tag=${imageProps.tag} --default-repo ${imageProps.repositoryPrefix}`
+      // XXX Note that we had to process the repository uri coming from ECR, since it will be of form
+      //    xxxxxxxxxxxx.dkr.ecr.eu-central-1.amazonaws.com/hello-world-app/hello-world
+      // while we need it
+      //    xxxxxxxxxxxx.dkr.ecr.eu-central-1.amazonaws.com/hello-world-app
+      // This is because Skaffold will append "hello-world" for the image name again and we need to give it just the
+      // <repo-prefix>/<namespace> part.
+      // Sorry, I could not find a better solution beside using some additional scripting function ;)
+      commands = [
+        `SKAFFOLD_DEFAULT_REPO=\`echo ${imageProps.repositoryPrefix} | cut -d "/" -f1\`/\`echo ${imageProps.repositoryPrefix} | cut -d "/" -f2\``,
+        `skaffold run -p ${props.skaffoldProfiles} --tag=${imageProps.tag}`
       ];
     } else {
       commands = [ 

@@ -8,7 +8,7 @@ import {SkaffoldPipelineStack} from '../lib/skaffold-pipeline-stack';
  * Configuration properties for the CI/CD stack
  */
 export interface MicroserviceCiCdStackProps extends StackProps {
-    readonly projectName: string,
+    readonly microserviceName: string,
 
     readonly targetCluster: eks.Cluster,
 
@@ -43,11 +43,11 @@ export class MicroserviceCiCdStack extends Stack {
             branchName: 'master',
             fetchGitMetadata: true,
 
-            skaffoldProfiles: 'build-image',
+            skaffoldProfiles: 'aws',
 
             imageBuildProps: {
                 repositoryPrefix: props.ecrRepository.repositoryUri,
-                name: props.ecrRepository.repositoryName,
+//                repositoryPrefix: this.getSkaffoldRepositoryPrefix(props),
                 tag: 'dev'
             },
         });

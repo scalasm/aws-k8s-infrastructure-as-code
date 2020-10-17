@@ -21,14 +21,15 @@ const devClusterStack = new ClusterStack(app, 'DevClusterStack', {
 //
 const microserviceName = 'hello-world';
 const internalArtifactsStack = new InternalArtifactsStack(app, 'HelloWorldArtifactsStack', {
-    projectName: microserviceName,
+    applicationName: applicationName,
+    microserviceName: microserviceName,
 });
 
 //
 // CI/CD environment
 //
 new MicroserviceCiCdStack( app, 'HelloWorldCiCdStack', {
-    projectName: microserviceName,
+    microserviceName: microserviceName,
     targetCluster: devClusterStack.cluster,
 
     codeRepository: internalArtifactsStack.codeRepository,
