@@ -1,4 +1,4 @@
-# Welcome to your CDK TypeScript project!
+# CI/CD Infrastructure for K8S microservices on AWS
 
 This project contains the companion code for a [series of Medium articles](https://marioscalas.medium.com/an-example-of-development-workflow-for-microservices-on-aws-a3795850cc07) 
 demonstrating my CI/CD for microservices.
