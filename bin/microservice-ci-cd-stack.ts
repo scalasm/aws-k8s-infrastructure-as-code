@@ -36,8 +36,7 @@ export class MicroserviceCiCdStack extends Stack {
      */
     protected defineCiCdPipelines(props: MicroserviceCiCdStackProps) {
         new SkaffoldPipelineStack(this, 'HelloWorldDevPipeline', {
-            clusterName: props.targetCluster.clusterName,
-            eksAdminRoleArn: props.targetCluster.adminRole.roleArn,
+            targetCluster: props.targetCluster,
 
             repoName: props.codeRepository.repositoryName,
             branchName: 'master',
@@ -47,7 +46,6 @@ export class MicroserviceCiCdStack extends Stack {
 
             imageBuildProps: {
                 repositoryPrefix: props.ecrRepository.repositoryUri,
-//                repositoryPrefix: this.getSkaffoldRepositoryPrefix(props),
                 tag: 'dev'
             },
         });
