@@ -24,13 +24,9 @@ export class ClusterStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props: ClusterStackProps) {
     super(scope, id, props);
 
-    const vpcId: string = props.clusterName + '-vpc';
     const stackId : string = props.clusterName;
 
-    const vpc = new ec2.Vpc(this, vpcId);
-
     this.cluster = new eks.Cluster(this, stackId, {
-      vpc: vpc,
       clusterName: props.clusterName,
       version: eks.KubernetesVersion.V1_17,
       defaultCapacity: 2,
@@ -39,10 +35,10 @@ export class ClusterStack extends cdk.Stack {
 
     // We setup a namespace for the application within our cluster
     if (props.namespaceName) {
-      const namespace = this.cluster.addManifest('my-namespace', {
+      this.cluster.addManifest('application-namespace', {
         apiVersion: 'v1',
         kind: 'Namespace',
-        metadata: { name: props!!.namespaceName }
+        metadata: { name: props.namespaceName }
       });
     }
 
